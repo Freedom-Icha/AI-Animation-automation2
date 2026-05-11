@@ -1,0 +1,185 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>AI Animation Automation (Google AI Studio Edition)</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Space+Mono:ital,wght@0,400;0,700;1,400&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="style.css"/>
+</head>
+<body>
+
+<!-- HEADER -->
+<header class="app-header">
+  <div class="header-inner">
+    <div class="logo">
+      <span class="logo-icon">▶</span>
+      <span class="logo-text">AI<em>ANIM</em></span>
+    </div>
+    <div class="header-tags">
+      <span class="tag">Google AI Studio</span>
+      <span class="tag">Fal.ai</span>
+      <span class="tag">Runway ML</span>
+    </div>
+  </div>
+</header>
+
+<!-- API KEYS MODAL -->
+<div class="modal-overlay" id="apiModal">
+  <div class="modal">
+    <div class="modal-header">
+      <h2>⚙ API Configuration</h2>
+      <p>Enter your API keys to power the pipeline. Keys are stored in your browser only.</p>
+    </div>
+    <div class="modal-body">
+      <div class="key-group">
+        <label>Google AI Studio API Key <span class="req">*</span></label>
+        <input type="password" id="googleKey" placeholder="AIza..." autocomplete="off"/>
+        <small>Used for story generation via Gemini 1.5</small>
+      </div>
+      <div class="key-group">
+        <label>Fal.ai API Key <span class="req">*</span></label>
+        <input type="password" id="falKey" placeholder="fal-..." autocomplete="off"/>
+        <small>Used for image generation</small>
+      </div>
+      <div class="key-group">
+        <label>Runway ML API Key <span class="req">*</span></label>
+        <input type="password" id="runwayKey" placeholder="rw-..." autocomplete="off"/>
+        <small>Used for video animation</small>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn-primary" id="saveKeys">Save & Continue →</button>
+    </div>
+  </div>
+</div>
+
+<!-- MAIN APP -->
+<main class="app-main">
+
+  <!-- STEP 1: UPLOAD / INPUT -->
+  <section class="step active" id="step1">
+    <div class="step-label"><span>01</span> YOUR STORY</div>
+    <div class="step-content">
+      <div class="upload-zone" id="uploadZone">
+        <div class="upload-inner">
+          <div class="upload-icon">📄</div>
+          <div class="upload-text">Drop a .txt file here</div>
+          <div class="upload-or">— or —</div>
+          <button class="btn-outline" id="browseBtn">Browse File</button>
+          <input type="file" id="fileInput" accept=".txt,.pdf,.doc,.docx" hidden/>
+        </div>
+      </div>
+      <div class="divider-text">or type / paste your storyline below</div>
+      <div class="textarea-wrap">
+        <textarea id="storyInput" placeholder="Write your story outline here..."></textarea>
+        <div class="char-count" id="charCount">0 characters</div>
+      </div>
+      <div class="style-row">
+        <div class="style-option">
+          <label>Image Style</label>
+          <select id="imageStyle">
+            <option value="comic book graphic novel style, bold ink outlines, halftone shading, vibrant panels" selected>Comic Book / Graphic Novel</option>
+            <option value="cinematic realism, photographic, dramatic lighting, 8k">Cinematic / Realistic</option>
+            <option value="anime illustration, Studio Ghibli inspired, soft watercolour">Anime / Illustrated</option>
+          </select>
+        </div>
+        <div class="style-option">
+          <label>Scenes</label>
+          <select id="sceneCount">
+            <option value="6">6 Scenes</option>
+            <option value="8" selected>8 Scenes</option>
+            <option value="10">10 Scenes</option>
+          </select>
+        </div>
+      </div>
+      <button class="btn-primary full-width" id="generateStoryBtn">
+        <span>Generate Story & Scenes</span>
+        <span class="btn-arrow">→</span>
+      </button>
+    </div>
+  </section>
+
+  <!-- PIPELINE PROGRESS -->
+  <section class="pipeline-track" id="pipelineTrack" style="display:none">
+    <div class="pipeline-stages">
+      <div class="stage" id="stageStory">
+        <div class="stage-dot"></div>
+        <div class="stage-label">Story<br/>Generation</div>
+      </div>
+      <div class="stage-line"></div>
+      <div class="stage" id="stagePrompts">
+        <div class="stage-dot"></div>
+        <div class="stage-label">Image<br/>Prompts</div>
+      </div>
+      <div class="stage-line"></div>
+      <div class="stage" id="stageImages">
+        <div class="stage-dot"></div>
+        <div class="stage-label">Image<br/>Generation</div>
+      </div>
+      <div class="stage-line"></div>
+      <div class="stage" id="stageVideo">
+        <div class="stage-dot"></div>
+        <div class="stage-label">Video<br/>Animation</div>
+      </div>
+    </div>
+    <div class="pipeline-log" id="pipelineLog"></div>
+  </section>
+
+  <!-- STEP 2: STORY REVIEW -->
+  <section class="step" id="step2" style="display:none">
+    <div class="step-label"><span>02</span> GENERATED STORY</div>
+    <div class="step-content">
+      <div class="story-title-row">
+        <h2 id="storyTitle">Untitled Story</h2>
+      </div>
+      <div id="scenesContainer" class="scenes-list"></div>
+      <button class="btn-primary full-width" id="generateImagesBtn">
+        <span>Generate Images for All Scenes</span>
+        <span class="btn-arrow">→</span>
+      </button>
+    </div>
+  </section>
+
+  <!-- STEP 3: IMAGES -->
+  <section class="step" id="step3" style="display:none">
+    <div class="step-label"><span>03</span> SCENE IMAGES</div>
+    <div class="step-content">
+      <div id="imageGrid" class="image-grid"></div>
+      <button class="btn-primary full-width" id="generateVideosBtn">
+        <span>Animate All Scenes with Runway ML</span>
+        <span class="btn-arrow">→</span>
+      </button>
+    </div>
+  </section>
+
+  <!-- STEP 4: FINAL VIDEO PLAYER -->
+  <section class="step" id="step4" style="display:none">
+    <div class="step-label"><span>04</span> YOUR ANIMATION</div>
+    <div class="step-content">
+      <div class="player-wrap">
+        <div class="player-screen" id="playerScreen">
+          <video id="mainVideo" controls playsinline></video>
+          <div class="player-overlay" id="playerOverlay">
+            <div class="scene-caption" id="sceneCaption"></div>
+          </div>
+        </div>
+        <div class="scene-thumbnails" id="sceneThumbnails"></div>
+      </div>
+      <div class="export-row">
+        <button class="btn-outline" id="downloadAllBtn">⬇ Download All Videos</button>
+        <button class="btn-primary" id="restartBtn">↺ Start New Story</button>
+      </div>
+    </div>
+  </section>
+
+</main>
+
+<!-- TOAST -->
+<div class="toast" id="toast"></div>
+
+<script src="app.js"></script>
+</body>
+</html>
